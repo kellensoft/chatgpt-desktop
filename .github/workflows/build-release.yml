@@ -34,7 +34,7 @@ jobs:
         uses: jurplel/install-qt-action@v3
         with:
           version: '6.6.2'
-          modules: 'qtwebengine'
+          modules: 'qtwebengine qtwebchannel'
 
       - name: Set build path
         id: vars
