@@ -14,10 +14,7 @@ qt_add_executable(ChatGPT
     resources.qrc
 )
 
-qt_add_translations(
-    TARGETS ChatGPT
-    TS_FILES ChatGPT_en_US.ts
-)
+qt_add_translations(ChatGPT TS_FILES ChatGPT_en_US.ts)
 
 target_link_libraries(ChatGPT
     PRIVATE
