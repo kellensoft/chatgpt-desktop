@@ -4,6 +4,7 @@
 #include <QWebEngineView>
 #include <QMainWindow>
 #include <QWebEngineProfile>
+#include <QWebEngineCookieStore>
 #include <QWebEnginePage>
 #include <QVBoxLayout>
 #include <QProgressBar>
