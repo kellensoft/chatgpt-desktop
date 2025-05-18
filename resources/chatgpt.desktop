@@ -1,0 +1,9 @@
+[Desktop Entry]
+Version=1.0
+Type=Application
+Name=ChatGPT
+Comment=ChatGPT desktop interface
+Exec=ChatGPT
+Icon=chatgpt
+Terminal=false
+Categories=Utility;Chat;

@@ -1,0 +1,168 @@
+name: Build and Release Qt App
+
+on:
+  push:
+    branches: ["main"]
+  pull_request:
+    branches: ["main"]
+  release:
+    types: [created]
+
+jobs:
+  build:
+    runs-on: ${{ matrix.os }}
+    strategy:
+      fail-fast: false
+      matrix:
+        os: [ubuntu-latest, windows-latest, macos-latest]
+        build_type: [Release]
+        include:
+          - os: windows-latest
+            c_compiler: cl
+            cpp_compiler: cl
+          - os: ubuntu-latest
+            c_compiler: gcc
+            cpp_compiler: g++
+          - os: macos-latest
+            c_compiler: clang
+            cpp_compiler: clang++
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Set up Qt
+        uses: jurplel/install-qt-action@v3
+        with:
+          version: '6.6.2'
+          modules: 'qtwebengine'
+
+      - name: Set build path
+        id: vars
+        run: echo "build-dir=${{ github.workspace }}/build" >> $GITHUB_OUTPUT
+
+      - name: Configure CMake
+        run: >
+          cmake -B ${{ steps.vars.outputs.build-dir }}
+          -DCMAKE_CXX_COMPILER=${{ matrix.cpp_compiler }}
+          -DCMAKE_C_COMPILER=${{ matrix.c_compiler }}
+          -DCMAKE_BUILD_TYPE=${{ matrix.build_type }}
+          -S ${{ github.workspace }}
+
+      - name: Build
+        run: cmake --build ${{ steps.vars.outputs.build-dir }} --config ${{ matrix.build_type }}
+
+      - name: Run tests
+        working-directory: ${{ steps.vars.outputs.build-dir }}
+        run: ctest --build-config ${{ matrix.build_type }}
+
+  release-linux-appimage:
+    if: github.event_name == 'release'
+    runs-on: ubuntu-latest
+    needs: build
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Install dependencies
+        run: |
+          sudo apt update
+          sudo apt install -y qt6-base-dev qt6-webengine-dev qt6-tools-dev build-essential cmake linuxdeployqt desktop-file-utils
+
+      - name: Set up Qt
+        uses: jurplel/install-qt-action@v3
+        with:
+          version: '6.6.2'
+          modules: 'qtwebengine'
+
+      - name: Build
+        run: |
+          mkdir -p build && cd build
+          cmake .. -DCMAKE_BUILD_TYPE=Release
+          make -j$(nproc)
+
+      - name: Prepare AppDir
+        run: |
+          mkdir -p build/AppDir/usr/bin
+          mkdir -p build/AppDir/usr/share/applications
+          mkdir -p build/AppDir/usr/share/icons/hicolor/256x256/apps
+          cp build/ChatGPTWrapper build/AppDir/usr/bin/
+          cp resources/chatgpt-wrapper.desktop build/AppDir/usr/share/applications/
+          cp icons/chatgpt.png build/AppDir/usr/share/icons/hicolor/256x256/apps/
+
+      - name: Bundle AppImage
+        run: |
+          cd build
+          linuxdeployqt AppDir/usr/share/applications/chatgpt.desktop -appimage
+
+      - name: Upload AppImage to release
+        uses: softprops/action-gh-release@v1
+        with:
+          files: build/*.AppImage
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+
+  release-macos:
+    if: github.event_name == 'release'
+    runs-on: macos-latest
+    needs: build
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Set up Qt
+        uses: jurplel/install-qt-action@v3
+        with:
+          version: '6.6.2'
+          modules: 'qtwebengine'
+
+      - name: Build macOS app
+        run: |
+          mkdir -p build && cd build
+          cmake .. -DCMAKE_BUILD_TYPE=Release
+          make -j$(sysctl -n hw.logicalcpu)
+
+      - name: Package macOS .app
+        run: |
+          cd build
+          mkdir -p ChatGPT.app/Contents/MacOS
+          cp ChatGPT ChatGPT.app/Contents/MacOS/
+          zip -r ChatGPT-macOS.zip ChatGPT.app
+
+      - name: Upload macOS zip to release
+        uses: softprops/action-gh-release@v1
+        with:
+          files: build/ChatGPT-macOS.zip
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+
+  release-windows-msi:
+    if: github.event_name == 'release'
+    runs-on: windows-latest
+    needs: build
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Install WiX Toolset
+        run: choco install wix --no-progress
+
+      - name: Set up Qt
+        uses: jurplel/install-qt-action@v3
+        with:
+          version: '6.6.2'
+          modules: 'qtwebengine'
+
+      - name: Configure with CPack for WIX
+        run: |
+          mkdir build
+          cmake -B build -G "Ninja" -DCMAKE_BUILD_TYPE=Release -DCPACK_GENERATOR=WIX
+
+      - name: Build and create MSI installer
+        run: |
+          cmake --build build --config Release
+          cmake --build build --target package
+
+      - name: Upload MSI to release
+        uses: softprops/action-gh-release@v1
+        with:
+          files: build/*.msi
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+
