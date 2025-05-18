@@ -57,6 +57,14 @@ int main(int argc, char *argv[]) {
     QAction *reloadAction = fileMenu->addAction("Reload");
     QObject::connect(reloadAction, &QAction::triggered, view, &QWebEngineView::reload);
 
+    // Logout action in menu
+    QAction *logoutAction = fileMenu->addAction("Logout");
+    QObject::connect(logoutAction, &QAction::triggered, [&]() {
+        QWebEngineCookieStore *store = profile->cookieStore();
+        store->deleteAllCookies();
+        view->reload();
+    });
+
     window.resize(1200, 800);
     window.show();
 
