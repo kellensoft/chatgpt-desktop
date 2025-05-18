@@ -19,7 +19,7 @@ int main(int argc, char *argv[]) {
 
     QMainWindow window;
     window.setWindowTitle("ChatGPT");
-    window.setWindowIcon(QIcon(":/icons/logo.png"));
+    window.setWindowIcon(QIcon(":/icons/chatgpt.png"));
 
     // Persistent profile
     QWebEngineProfile *profile = new QWebEngineProfile("chatgpt_profile", &window);
