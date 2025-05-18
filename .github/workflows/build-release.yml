@@ -40,8 +40,18 @@ jobs:
         id: vars
         run: echo "build-dir=${{ github.workspace }}/build" >> $GITHUB_OUTPUT
 
-      - name: Configure CMake
-        run: cmake -B ${{ steps.vars.outputs.build-dir }} -S . ${{ (runner.os != 'Windows') && format('-DCMAKE_BUILD_TYPE={0}', matrix.build_type) || '' }} ${{ (runner.os == 'Linux' || runner.os == 'macOS') && format('-DCMAKE_C_COMPILER={0} -DCMAKE_CXX_COMPILER={1}', matrix.c_compiler, matrix.cpp_compiler) || '' }}
+      - name: Configure CMake (Windows)
+        if: runner.os == 'Windows'
+        run: |
+          cmake -B ${{ steps.vars.outputs.build-dir }} -S .
+
+      - name: Configure CMake (Unix)
+        if: runner.os != 'Windows'
+        run: |
+          cmake -B ${{ steps.vars.outputs.build-dir }} -S . \
+            -DCMAKE_BUILD_TYPE=${{ matrix.build_type }} \
+            -DCMAKE_C_COMPILER=${{ matrix.c_compiler }} \
+            -DCMAKE_CXX_COMPILER=${{ matrix.cpp_compiler }}
 
       - name: Build
         run: cmake --build ${{ steps.vars.outputs.build-dir }} --config ${{ matrix.build_type }}
