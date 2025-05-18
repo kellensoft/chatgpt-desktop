@@ -1,5 +1,6 @@
 <RCC>
     <qresource prefix="/">
         <file>icons/chatgpt.png</file>
+        <file>icons/chatgpt.ico</file>
     </qresource>
 </RCC>
