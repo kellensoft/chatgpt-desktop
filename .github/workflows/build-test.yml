@@ -1,0 +1,60 @@
+name: Build and Test
+
+on:
+  push:
+    branches: ["main"]
+  pull_request:
+    branches: ["main"]
+
+jobs:
+  build:
+    runs-on: ${{ matrix.os }}
+    strategy:
+      fail-fast: false
+      matrix:
+        os: [ubuntu-latest, windows-latest, macos-latest]
+        build_type: [Release]
+        include:
+          - os: windows-latest
+            c_compiler: cl
+            cpp_compiler: cl
+          - os: ubuntu-latest
+            c_compiler: gcc
+            cpp_compiler: g++
+          - os: macos-latest
+            c_compiler: clang
+            cpp_compiler: clang++
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Set up Qt
+        uses: jurplel/install-qt-action@v3
+        with:
+          version: '6.6.2'
+          modules: 'qtwebengine qtwebchannel qtpositioning'
+
+      - name: Set build path
+        id: vars
+        shell: bash
+        run: echo "build-dir=${{ github.workspace }}/build" >> $GITHUB_OUTPUT
+
+      - name: Configure CMake (Windows)
+        if: runner.os == 'Windows'
+        run: |
+          cmake -B ${{ steps.vars.outputs.build-dir }} -S .
+
+      - name: Configure CMake (Unix)
+        if: runner.os != 'Windows'
+        run: |
+          cmake -B ${{ steps.vars.outputs.build-dir }} -S . \
+            -DCMAKE_BUILD_TYPE=${{ matrix.build_type }} \
+            -DCMAKE_C_COMPILER=${{ matrix.c_compiler }} \
+            -DCMAKE_CXX_COMPILER=${{ matrix.cpp_compiler }}
+
+      - name: Build
+        run: cmake --build ${{ steps.vars.outputs.build-dir }} --config ${{ matrix.build_type }}
+
+      - name: Run tests
+        working-directory: ${{ steps.vars.outputs.build-dir }}
+        run: ctest --build-config ${{ matrix.build_type }}
