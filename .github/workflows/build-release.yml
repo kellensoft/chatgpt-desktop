@@ -38,7 +38,7 @@ jobs:
 
       - name: Set build path
         id: vars
-        run: echo "build-dir=${{ github.workspace }}/build" >> $GITHUB_OUTPUT
+        run: echo build-dir=${{ github.workspace }}/build >> $GITHUB_OUTPUT
 
       - name: Configure CMake (Windows)
         if: runner.os == 'Windows'
