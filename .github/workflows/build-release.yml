@@ -93,8 +93,8 @@ jobs:
           mkdir -p build/AppDir/usr/bin
           mkdir -p build/AppDir/usr/share/applications
           mkdir -p build/AppDir/usr/share/icons/hicolor/256x256/apps
-          cp build/ChatGPTWrapper build/AppDir/usr/bin/
-          cp resources/chatgpt-wrapper.desktop build/AppDir/usr/share/applications/
+          cp build/ChatGPT build/AppDir/usr/bin/
+          cp resources/chatgpt.desktop build/AppDir/usr/share/applications/
           cp icons/chatgpt.png build/AppDir/usr/share/icons/hicolor/256x256/apps/
 
       - name: Bundle AppImage
