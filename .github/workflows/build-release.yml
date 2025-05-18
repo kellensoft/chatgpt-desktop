@@ -41,11 +41,7 @@ jobs:
         run: echo "build-dir=${{ github.workspace }}/build" >> $GITHUB_OUTPUT
 
       - name: Configure CMake
-        run: |
-            cmake -B build -S . \
-            -DCMAKE_BUILD_TYPE=Release \
-            -DCMAKE_C_COMPILER=${{ matrix.c_compiler }} \
-            -DCMAKE_CXX_COMPILER=${{ matrix.cpp_compiler }}
+        run: cmake -B build -S . -DCMAKE_BUILD_TYPE=Release -DCMAKE_C_COMPILER=${{ matrix.c_compiler }} -DCMAKE_CXX_COMPILER=${{ matrix.cpp_compiler }}
 
       - name: Build
         run: cmake --build ${{ steps.vars.outputs.build-dir }} --config ${{ matrix.build_type }}
