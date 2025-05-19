@@ -4,10 +4,14 @@ on:
   release:
     types: [created]
 
+permissions:
+  contents: write
+
 jobs:
   release-linux-appimage:
     if: github.event_name == 'release'
-    runs-on: ubuntu-latest
+    runs-on: ubuntu-22.04
+    
     steps:
       - uses: actions/checkout@v4
 
@@ -55,6 +59,7 @@ jobs:
   release-macos:
     if: github.event_name == 'release'
     runs-on: macos-latest
+    
     steps:
       - uses: actions/checkout@v4
 
@@ -86,6 +91,7 @@ jobs:
   release-windows-msi:
     if: github.event_name == 'release'
     runs-on: windows-latest
+    
     steps:
       - uses: actions/checkout@v4
 
@@ -101,12 +107,12 @@ jobs:
       - name: Configure with CPack for WIX
         run: |
           mkdir build
-          cmake -B build -G "Ninja" -DCMAKE_BUILD_TYPE=Release -DCPACK_GENERATOR=WIX
+          cmake -B build -G "Visual Studio 17 2022" -A x64 -DCMAKE_BUILD_TYPE=Release -DCPACK_GENERATOR=WIX
 
       - name: Build and create MSI installer
         run: |
           cmake --build build --config Release
-          cmake --build build --target package
+          cmake --build build --config Release --target package
 
       - name: Upload MSI to release
         uses: softprops/action-gh-release@v1
